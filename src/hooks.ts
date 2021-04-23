@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import type { EffectCallback, DependencyList } from "react";
+
+export function useForceUpdate() {
+  const setValue = useState({})[1];
+  return useCallback(() => setValue({}), []);
+}
 
 export function useTimeout(handler: TimerHandler, timeout?: number, deps?: DependencyList) {
   return useEffect(() => {
@@ -15,12 +20,7 @@ export function useInterval(handler: TimerHandler, timeout?: number, deps?: Depe
   }, deps);
 }
 
-export function useForceUpdate() {
-  const setValue = useState({})[1];
-  return useCallback(() => setValue({}), []);
-}
-
-export function useTemporaryEffect(duration: number, effect: EffectCallback, deps?: DependencyList) {
+export function useEphemeral(duration: number, effect: EffectCallback, deps?: DependencyList) {
   return useEffect(() => {
     if (duration < 0) return effect();
     else {
@@ -60,11 +60,15 @@ export namespace usePromise {
   export type State<T> = Pending | Resolved<T> | Rejected;
 }
 
+export function useIterator<T, Y>(iterator: Iterator<T, Y, void>): [value: T | Y, next: () => void] {
+  const [value, setValue] = useState(useMemo(() => iterator.next().value, []));
+  return [value, useCallback(() => void setValue(iterator.next().value), [])];
+}
+
 export function useIterable<T>(iterable: Iterable<T>) {
   return useIterator<T, void>(iterable[Symbol.iterator]());
 }
 
-export function useIterator<T, Y>(iterator: Iterator<T, Y, void>): [value: T | Y, next: () => void] {
-  const [value, setValue] = useState(useMemo(() => iterator.next().value, []));
-  return [value, useCallback(() => void setValue(iterator.next().value), [])];
+export function useGenerator<T, Y>(generator: () => Generator<T, Y>) {
+  return useIterator(generator());
 }
