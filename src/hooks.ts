@@ -66,9 +66,9 @@ export function useIterator<T, Y>(iterator: Iterator<T, Y, void>): [value: T | Y
 }
 
 export function useIterable<T>(iterable: Iterable<T>) {
-  return useIterator<T, void>(iterable[Symbol.iterator]());
+  return useIterator<T, void>(useMemo(() => iterable[Symbol.iterator](), []));
 }
 
 export function useGenerator<T, Y>(generator: () => Generator<T, Y>) {
-  return useIterator(generator());
+  return useIterator(useMemo(() => generator(), []));
 }
